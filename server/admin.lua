@@ -22,7 +22,7 @@ end
 
 local function notify(src, type_, msg)
     if isConsole(src) then
-        lib.print.info(('[k_skills] %s: %s'):format(type_ or 'info', msg))
+        lib.print.info(('[df_skills] %s: %s'):format(type_ or 'info', msg))
     else
         TriggerClientEvent('ox_lib:notify', src, { type = type_ or 'inform', description = msg })
     end
@@ -53,14 +53,14 @@ end
 
 -- ADMIN COMMANDS BELOW (README HAS DETAILS)
 RegisterCommand('clearxp', function(src, args)
-    if not allowed(src, 'k_skills.clearxp') then
+    if not allowed(src, 'df_skills.clearxp') then
         return notify(src, 'error', 'You do not have permission.')
     end
 
     -- Console w/ no args: clear everyone online
     if isConsole(src) and #args == 0 then
         clearAllOnline(nil)
-        lib.print.info('[k_skills] Cleared XP for ALL online players.')
+        lib.print.info('[df_skills] Cleared XP for ALL online players.')
         return
     end
 
@@ -107,7 +107,7 @@ RegisterCommand('clearxp', function(src, args)
 end, false)
 
 RegisterCommand('clearxpall', function(src, args)
-    if not allowed(src, 'k_skills.clearxpall') then
+    if not allowed(src, 'df_skills.clearxpall') then
         return notify(src, 'error', 'You do not have permission.')
     end
 
@@ -125,7 +125,7 @@ RegisterCommand('clearxpall', function(src, args)
 end, false)
 
 RegisterCommand('setxp', function(src, args)
-    if not allowed(src, 'k_skills.setxp') then
+    if not allowed(src, 'df_skills.setxp') then
         return notify(src, 'error', 'You do not have permission.')
     end
 
@@ -153,7 +153,7 @@ RegisterCommand('setxp', function(src, args)
 end, false)
 
 RegisterCommand('addxp', function(src, args)
-    if not allowed(src, 'k_skills.addxp') then
+    if not allowed(src, 'df_skills.addxp') then
         return notify(src, 'error', 'You do not have permission.')
     end
 

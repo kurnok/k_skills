@@ -4,7 +4,7 @@ lua54 'yes'
 
 author 'Kurnok'
 description 'Global skills / XP system with exports'
-version '1.0.1'
+version '1.0.2'
 
 shared_scripts {
     '@ox_lib/init.lua',

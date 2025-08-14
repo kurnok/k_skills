@@ -64,17 +64,51 @@ end
 local function SetXP(src, skillId, value)
     if not src or not skillId then return false end
     value = math.max(0, math.floor(tonumber(value) or 0))
-    return qbx:SetMetadata(src, metaKey(skillId), value) and true or false
+
+    local ok, err = pcall(function()
+        qbx:SetMetadata(src, metaKey(skillId), value)
+    end)
+
+    if not ok then
+        lib.print.error(('[df_skills] SetXP fail: SetMetadata errored (src=%s, key=%s, val=%d, err=%s)')
+            :format(src, metaKey(skillId), value, tostring(err)))
+        return false
+    end
+    return true
 end
 
 local function AddXP(src, skillId, amount)
-    if not src or not skillId then return false end
+    if not src or src <= 0 then
+        lib.print.error(('[df_skills] AddXP fail: bad src (%s, skill=%s, amt=%s)')
+            :format(tostring(src), tostring(skillId), tostring(amount)))
+        return false
+    end
+    if not skillId then
+        lib.print.error('[df_skills] AddXP fail: missing skillId')
+        return false
+    end
+
     amount = math.floor(tonumber(amount) or 0)
     if amount == 0 then return true end
+
     local key = metaKey(skillId)
     local cur = tonumber(qbx:GetMetadata(src, key)) or 0
-    return qbx:SetMetadata(src, key, math.max(0, cur + amount)) and true or false
+    local newVal = math.max(0, cur + amount)
+
+    local ok, err = pcall(function()
+        qbx:SetMetadata(src, key, newVal)
+    end)
+
+    if not ok then
+        lib.print.error(('[df_skills] AddXP fail: SetMetadata errored (src=%s, key=%s, cur=%d, add=%d, err=%s)')
+            :format(src, key, cur, amount, tostring(err)))
+        return false
+    end
+
+    return true
 end
+
+
 
 local function GetLevel(src, skillId)
     local lvl = levelFromXP(skillId, GetXP(src, skillId))
@@ -96,8 +130,8 @@ exports('GetLevel',     GetLevel)
 exports('GetLevelInfo', GetLevelInfo)
 
 -- Callbacks
-lib.callback.register('k_skills:getXP', function(source, skill) return GetXP(source, skill) end)
-lib.callback.register('k_skills:setXP', function(source, skill, v) return SetXP(source, skill, v) end)
-lib.callback.register('k_skills:addXP', function(source, skill, a) return AddXP(source, skill, a) end)
-lib.callback.register('k_skills:getLevel', function(source, skill) return GetLevel(source, skill) end)
-lib.callback.register('k_skills:getLevelInfo', function(source, skill) return GetLevelInfo(source, skill) end)
+lib.callback.register('df_skills:getXP', function(source, skill) return GetXP(source, skill) end)
+lib.callback.register('df_skills:setXP', function(source, skill, v) return SetXP(source, skill, v) end)
+lib.callback.register('df_skills:addXP', function(source, skill, a) return AddXP(source, skill, a) end)
+lib.callback.register('df_skills:getLevel', function(source, skill) return GetLevel(source, skill) end)
+lib.callback.register('df_skills:getLevelInfo', function(source, skill) return GetLevelInfo(source, skill) end)
