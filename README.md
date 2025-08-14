@@ -1,3 +1,9 @@
+# About:
+This is a script used to save experience gained from crafting/mining and/or any other activities you add. It saves it to the player metadata instead of using SQL.
+
+It's used in conjunction with scripts listed here:
+https://kurnok-scripts.tebex.io/category/3059138
+
 # Requires
 - ox_inventory
 - qbx_core
