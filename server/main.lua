@@ -1,15 +1,7 @@
 local cfg = require 'shared.config'
 local qbx = exports.qbx_core
 
--- Levels are computed on demand from shared/config.lua xpTables.
-
--- Helpers
-local function metaKey(skillId)
-    -- Map skill -> metadata key (e.g., 'mining' -> 'miningXP')
-    local map = cfg.storage and cfg.storage.metaKeys or nil
-    return (map and map[skillId]) or (tostring(skillId) .. 'XP')
-end
-
+-- Levels computed from shared/config.lua xpTables
 local function getXPTable(skillId)
     local t = cfg.xpTables or {}
     return t[skillId] or t.default or { [1] = 0 }
@@ -20,7 +12,6 @@ local function levelFromXP(skillId, totalXP)
     totalXP = math.floor(tonumber(totalXP) or 0)
     local ladder = getXPTable(skillId)
 
-    -- collect numeric levels sorted ascending
     local levels = {}
     for L, _ in pairs(ladder) do
         if type(L) == 'number' then levels[#levels+1] = L end
@@ -42,7 +33,6 @@ local function levelFromXP(skillId, totalXP)
         lvl = cfg.maxLevel
     end
 
-    -- find next level requirement
     local nextReq = nil
     for i = 1, #levels do
         if levels[i] > lvl then
@@ -54,27 +44,37 @@ local function levelFromXP(skillId, totalXP)
     return lvl, nextReq
 end
 
--- Get Level, Get XP, Set XP and Add XP
+-- helpers to read/write the skills table
+local function readSkills(src)
+    local t = qbx:GetMetadata(src, 'skills') or {}
+    if type(t) ~= 'table' then t = {} end
+    return t
+end
+local function writeSkills(src, t)
+    local ok, err = pcall(function()
+        qbx:SetMetadata(src, 'skills', t)
+    end)
+    if not ok then
+        lib.print.error(('[k_skills] writeSkills fail (src=%s, err=%s)'):format(src, tostring(err)))
+        return false
+    end
+    return true
+end
+
+-- API
+
 local function GetXP(src, skillId)
     if not src or not skillId then return 0 end
-    local val = qbx:GetMetadata(src, metaKey(skillId))
-    return tonumber(val) or 0
+    local t = readSkills(src)
+    return tonumber(t[skillId]) or 0
 end
 
 local function SetXP(src, skillId, value)
     if not src or not skillId then return false end
     value = math.max(0, math.floor(tonumber(value) or 0))
-
-    local ok, err = pcall(function()
-        qbx:SetMetadata(src, metaKey(skillId), value)
-    end)
-
-    if not ok then
-        lib.print.error(('[k_skills] SetXP fail: SetMetadata errored (src=%s, key=%s, val=%d, err=%s)')
-            :format(src, metaKey(skillId), value, tostring(err)))
-        return false
-    end
-    return true
+    local t = readSkills(src)
+    t[skillId] = value
+    return writeSkills(src, t)
 end
 
 local function AddXP(src, skillId, amount)
@@ -91,35 +91,26 @@ local function AddXP(src, skillId, amount)
     amount = math.floor(tonumber(amount) or 0)
     if amount == 0 then return true end
 
-    local key = metaKey(skillId)
-    local cur = tonumber(qbx:GetMetadata(src, key)) or 0
-    local newVal = math.max(0, cur + amount)
-
-    local ok, err = pcall(function()
-        qbx:SetMetadata(src, key, newVal)
-    end)
-
-    if not ok then
-        lib.print.error(('[k_skills] AddXP fail: SetMetadata errored (src=%s, key=%s, cur=%d, add=%d, err=%s)')
-            :format(src, key, cur, amount, tostring(err)))
-        return false
-    end
-
-    return true
+    local t = readSkills(src)
+    t[skillId] = math.max(0, (tonumber(t[skillId]) or 0) + amount)
+    return writeSkills(src, t)
 end
-
-
 
 local function GetLevel(src, skillId)
     local lvl = levelFromXP(skillId, GetXP(src, skillId))
     return type(lvl) == 'table' and lvl[1] or lvl
 end
 
---  Return level, totalXP, nextLevelXP (for UIs/progress bars)
 local function GetLevelInfo(src, skillId)
     local total = GetXP(src, skillId)
     local lvl, nextReq = levelFromXP(skillId, total)
-    return { level = lvl, totalXP = total, nextLevelXP = nextReq }
+    return {
+        level       = lvl,
+        totalXP     = total,
+        nextLevelXP = nextReq,
+        cur         = total,
+        next        = nextReq or 0,
+    }
 end
 
 -- Exports
