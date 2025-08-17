@@ -53,3 +53,34 @@ add_ace group.admin k_skills.clearxpall allow
 add_ace group.admin k_skills.addxp allow
 add_ace group.admin k_skills.setxp allow
 add_ace group.admin k_skills.cleanup allow
+
+
+# EXPORTS
+-- Award XP to a player
+exports['df_skills']:AddXP(source, skillId, amount)
+
+-- Get current XP value for a player
+exports['df_skills']:GetXP(source, skillId)
+
+-- Get the current level for a skill
+exports['df_skills']:GetLevel(source, skillId)
+
+-- Set an absolute XP value (admin use typically)
+exports['df_skills']:SetXP(source, skillId, value)
+
+-- Clear/reset XP for a skill
+exports['df_skills']:ClearXP(source, skillId)
+
+
+
+example:
+--lets say you added a new skill called: hacking
+
+-- Give 5 XP to a player’s hacking skill
+exports.k_skills:AddXP(src, 'hacking', 5)
+
+-- Check if they reached level 3 crafting
+local lvl = exports.k_skills:GetLevel(src, 'hacking')
+if lvl >= 3 then
+    -- let them craft the advanced recipe
+end
